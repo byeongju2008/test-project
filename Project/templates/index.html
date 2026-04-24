@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>기술 스택 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+
+    <div class="glass-top overflow-y-auto">
+        <div class="max-w-7xl mx-auto p-12 pt-10 text-white">
+            <h1 class="text-3xl font-black mb-8 flex items-center gap-4">
+                <div class="w-10 h-10 bg-white/10 rounded-xl border border-white/20 flex items-center justify-center font-mono text-xl">/</div>
+                <span>기술 스택 목록</span>
+            </h1>
+
+            <!-- [조건부 출력] -->
+            <div class="flex gap-3 flex-wrap mb-10 pb-8 border-b border-white/10">
+                {% for skill in default_skills %}
+                    {% if skill.lower() == "python" %}
+                        <span class="bg-blue-600/80 text-white px-5 py-2 rounded-full text-xs font-bold shadow-lg">[BACKEND] {{ skill }}</span>
+                    {% elif skill.lower() == "sql" %}
+                        <span class="bg-purple-600/80 text-white px-5 py-2 rounded-full text-xs font-bold shadow-lg">[DB] {{ skill }}</span>
+                    {% elif skill.lower() == "html" %}
+                        <span class="bg-orange-500/80 text-white px-5 py-2 rounded-full text-xs font-bold shadow-lg">{{ skill }}</span>
+                    {% elif skill.lower() == "bash" %}
+                        <span class="bg-emerald-600/80 text-white px-5 py-2 rounded-full text-xs font-bold shadow-lg">{{ skill }}</span>
+                    {% else %}
+                        <span class="bg-gray-500/50 text-white px-5 py-2 rounded-full text-xs font-bold shadow-lg">[ETC] {{ skill }}</span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- [반복 출력] -->
+            <div class="space-y-3 mb-10">
+                <h2 class="text-xl font-bold mb-4">입력한 데이터</h2>
+                {% for item in messages %}
+                    <div class="bg-white/5 border border-white/10 p-5 rounded-2xl flex justify-between items-center transition-all hover:bg-white/10">
+                        <span class="text-white/80 font-medium">{{ item }}</span>
+                        <div class="w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse shadow-[0_0_10px_#60a5fa]"></div>
+                    </div>
+                {% else %}
+                    <p class="text-white/30 italic text-sm">추가된 데이터가 없습니다.</p>
+                {% endfor %}
+            </div>
+
+            <!-- 입력 폼 -->
+            <form action="/" method="POST" class="flex gap-4 p-2 bg-white/5 rounded-2xl border border-white/5" autocomplete="off">
+                <input type="text" name="skill" placeholder="기술명 입력..." class="flex-1 bg-transparent px-5 py-3 outline-none placeholder-white/20 text-sm text-white">
+                <button type="submit" class="px-8 py-3 rounded-xl font-bold bg-white/10 hover:bg-white/20 transition-all border border-white/10 text-sm">추가</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- [2. 디자인 및 물리 효과 영역] 하단 배치 -->
+    <div id="core"></div> <!-- 물리 엔진 본체 -->
+
+    <style>
+        /* 시스템 커서 숨김 */
+        * { cursor: none !important; }
+        body { background-color: #000000; margin: 0; overflow: hidden; height: 100vh; font-family: sans-serif; }
+        
+        /* 레이아웃 디자인 */
+        .glass-top {
+            background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(25px);
+            min-height: 100vh; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 액체 커서 스타일 */
+        #core {
+            position: fixed; background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 25px rgba(186, 230, 253, 0.7), inset 0 0 8px #ffffff;
+            border-radius: 50%; pointer-events: none; z-index: 9999; top: 0; left: 0;
+            transition: width 0.6s cubic-bezier(0.23, 1, 0.32, 1), height 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            will-change: transform, width, height;
+        }
+        .drop {
+            position: fixed; width: 5px; height: 5px; background: rgba(186, 230, 253, 0.8);
+            border-radius: 50%; pointer-events: none; z-index: 9998; top: 0; left: 0;
+            transition: transform 0.1s linear, opacity 0.4s ease;
+        }
+    </style>
+
+    <script>
+        // [자바스크립트 물리 엔진] 최하단 배치
+        (function() {
+            const coreEl = document.getElementById('core');
+            if (!coreEl) return;
+            let mX = window.innerWidth/2, mY = window.innerHeight/2, cX = mX, cY = mY, pX = mX, pY = mY;
+            const drops = [];
+            let isHovered = false, currentMass = 15;
+            const baseMass = 15, minMass = 7, hoverBonus = 15;
+
+            window.addEventListener('mouseover', e => { if (e.target.closest('button, input, span, div.rounded-2xl')) isHovered = true; });
+            window.addEventListener('mouseout', e => { if (e.target.closest('button, input, span, div.rounded-2xl')) isHovered = false; });
+            window.addEventListener('mousemove', e => {
+                mX = e.clientX; mY = e.clientY;
+                const dist = Math.sqrt(Math.pow(mX - pX, 2) + Math.pow(mY - pY, 2));
+                if (dist > 10 && currentMass > minMass) {
+                    const el = document.createElement('div'); el.className = 'drop'; document.body.appendChild(el);
+                    drops.push({ el, x: cX, y: cY, vx: -(mX-pX)*0.3 + (Math.random()-0.5)*3, vy: -(mY-pY)*0.3 + (Math.random()-0.5)*3, merging: false });
+                    currentMass -= 0.6;
+                }
+                pX = mX; pY = mY;
+            });
+            function animate() {
+                cX += (mX - cX) * 0.2; cY += (mY - cY) * 0.2;
+                let size = currentMass + (isHovered ? hoverBonus : 0);
+                coreEl.style.width = size + 'px'; coreEl.style.height = size + 'px';
+                coreEl.style.transform = `translate3d(${cX - size/2}px, ${cY - size/2}px, 0)`;
+                for (let i = drops.length - 1; i >= 0; i--) {
+                    const d = drops[i]; const dx = cX - d.x, dy = cY - d.y, dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < size/2 + 10) d.merging = true;
+                    if (d.merging) { d.vx = dx * 0.2; d.vy = dy * 0.2; d.el.style.width = "1px"; d.el.style.height = "1px"; d.el.style.opacity = "0"; }
+                    else { d.vx += (dx / (dist + 1)) * 0.8; d.vy += (dy / (dist + 1)) * 0.8; d.vx *= 0.94; d.vy *= 0.94; }
+                    d.x += d.vx; d.y += d.vy; d.el.style.transform = `translate3d(${d.x - 2.5}px, ${d.y - 2.5}px, 0)`;
+                    if (dist < 5) { if (currentMass < baseMass) currentMass += 0.6; d.el.remove(); drops.splice(i, 1); }
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+    </script>
+</body>
+</html>
